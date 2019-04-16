@@ -30,68 +30,77 @@ public class Comsumer implements Runnable{
 		 * 	拿到module中的号码模拟请求撞库操作
 		 * 	获取到结果后填充入数据库
 		 */
-		
-		try {
+		while(true) {
 			
-			Module module = storage.take();
-			String mobile = module.getMobile();
-			for(WebsiteInfo websiteInfo : module.getWebsiteList()) {
+			try {
 				
-				
-				// 设置代理
-//				ProxyInfo proxy = null;
-//				if (StringUtils.isNotBlank(websiteInfo.getProxyStrategy())) {
-//					proxy = new ProxyInfo();
-//					proxy.setRefuseInfo(websiteInfo.getProxyRefused());
-//				}
-				
-				
-				String post = null;
-				if (StringUtils.isNotBlank(websiteInfo.getPost())) {
-					post = StringUtils.replace(websiteInfo.getPost(), "${mobile}", module.getMobile());
-					websiteInfo.setMode("POST");
+				if(storage.getIsExist() && storage.getQueue().size() == 0) {
+					break;
 				}
 				
-				
-				String url = StringUtils.replace(websiteInfo.getUrl(), "${mobile}", module.getMobile());
+				Module module = storage.take();
+				String mobile = module.getMobile();
+				for(WebsiteInfo websiteInfo : module.getWebsiteList()) {
+					
+					
+					// 设置代理
+//					ProxyInfo proxy = null;
+//					if (StringUtils.isNotBlank(websiteInfo.getProxyStrategy())) {
+//						proxy = new ProxyInfo();
+//						proxy.setRefuseInfo(websiteInfo.getProxyRefused());
+//					}
+					
+					
+					String post = null;
+					if (StringUtils.isNotBlank(websiteInfo.getPost())) {
+						post = StringUtils.replace(websiteInfo.getPost(), "${mobile}", module.getMobile());
+						websiteInfo.setMode("POST");
+					}
+					
+					
+					String url = StringUtils.replace(websiteInfo.getUrl(), "${mobile}", module.getMobile());
 
-				String html = HttpRequest.sendHttpRequestProxy(false, null,
-						websiteInfo.getMode() == null ? "GET" : websiteInfo.getMode(), url, post, null,
-						websiteInfo.getCharset(), getHeader(websiteInfo.getHeader()), false);
-				
-				// 处理结果
-				if (html != null) {
-					if (websiteInfo.getRegisteredMsg() != null) {
-						if ((websiteInfo.getMatchType() == 1 && html.equals(websiteInfo.getRegisteredMsg())
-								|| (websiteInfo.getMatchType() == 2
-										&& html.indexOf(websiteInfo.getRegisteredMsg()) != -1))) {
-							MobileInfo mobileInfo = new MobileInfo();
-							mobileInfo.setMobile(module.getMobile());
-							mobileInfo.setType(websiteInfo.getName());
-							mobileInfo.setCreateTime(new Date());
-//							mobileInfoService.insert(mobileInfo);
-						}
-					} else if (websiteInfo.getUnregisteredMsg() != null) {
-						if ((websiteInfo.getMatchType() == 1 && !html.equals(websiteInfo.getRegisteredMsg())
-								|| (websiteInfo.getMatchType() == 2
-										&& html.indexOf(websiteInfo.getRegisteredMsg()) == -1))) {
-							MobileInfo mobileInfo = new MobileInfo();
-							mobileInfo.setMobile(module.getMobile());
-							mobileInfo.setType(websiteInfo.getName());
-							mobileInfo.setCreateTime(new Date());
-//							mobileInfoService.insert(mobileInfo);
+					String html = HttpRequest.sendHttpRequestProxy(false, null,
+							websiteInfo.getMode() == null ? "GET" : websiteInfo.getMode(), url, post, null,
+							websiteInfo.getCharset(), getHeader(websiteInfo.getHeader()), false);
+					
+					// 处理结果
+					if (html != null) {
+						if (websiteInfo.getRegisteredMsg() != null) {
+							if ((websiteInfo.getMatchType() == 1 && html.equals(websiteInfo.getRegisteredMsg())
+									|| (websiteInfo.getMatchType() == 2
+											&& html.indexOf(websiteInfo.getRegisteredMsg()) != -1))) {
+								MobileInfo mobileInfo = new MobileInfo();
+								mobileInfo.setMobile(module.getMobile());
+								mobileInfo.setType(websiteInfo.getName());
+								mobileInfo.setCreateTime(new Date());
+//								mobileInfoService.insert(mobileInfo);
+							}
+						} else if (websiteInfo.getUnregisteredMsg() != null) {
+							if ((websiteInfo.getMatchType() == 1 && !html.equals(websiteInfo.getRegisteredMsg())
+									|| (websiteInfo.getMatchType() == 2
+											&& html.indexOf(websiteInfo.getRegisteredMsg()) == -1))) {
+								MobileInfo mobileInfo = new MobileInfo();
+								mobileInfo.setMobile(module.getMobile());
+								mobileInfo.setType(websiteInfo.getName());
+								mobileInfo.setCreateTime(new Date());
+//								mobileInfoService.insert(mobileInfo);
+							}
 						}
 					}
+					
+					
+					
 				}
-				
-				
-				
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ApplicationException e) {
+				e.printStackTrace();
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ApplicationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
+			
+			
+			
 		}
 		
 	}
